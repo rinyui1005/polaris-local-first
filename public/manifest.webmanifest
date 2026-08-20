@@ -1,0 +1,21 @@
+{
+  "name": "Polaris CC",
+  "short_name": "Polaris",
+  "description": "在 iPhone 上连接你的 Claude Code。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f3f6",
+  "theme_color": "#f8f5f8",
+  "icons": [
+    {
+      "src": "/icons/polaris-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/polaris-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

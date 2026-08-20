@@ -1,6 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'node:path';
 
 function resolveManualChunk(id: string) {
   if (!id.includes('node_modules')) return undefined;
@@ -45,10 +44,6 @@ export default defineConfig(({ mode }) => {
       : undefined,
     build: {
       rollupOptions: {
-        input: {
-          main: resolve(__dirname, 'index.html'),
-          chatboxConverter: resolve(__dirname, 'chatbox-converter.html')
-        },
         output: {
           manualChunks: resolveManualChunk
         }
