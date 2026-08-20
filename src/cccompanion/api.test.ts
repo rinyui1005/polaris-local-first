@@ -17,4 +17,11 @@ describe('mergeChatRecords', () => {
     const later = { role: 'assistant', text: 'hi', ts: '2026-08-20T10:00:01Z', turn_id: 'turn-1' };
     expect(mergeChatRecords([later], [earlier, later])).toEqual([earlier, later]);
   });
+
+  it('keeps the same array when polling returns no new chat records', () => {
+    const current = [{ role: 'user', text: 'still here', ts: '2026-08-20T10:00:00Z' }];
+
+    expect(mergeChatRecords(current, [])).toBe(current);
+    expect(mergeChatRecords(current, [...current])).toBe(current);
+  });
 });

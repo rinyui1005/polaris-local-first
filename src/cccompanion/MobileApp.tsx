@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   AuthenticationError,
   applySessionOptions,
@@ -264,15 +264,21 @@ export function MobileApp() {
   useEffect(() => {
     const timeline = timelineRef.current;
     if (!timeline || (!shouldStickRef.current && didInitialScrollRef.current)) return;
-    timeline.scrollTo({ top: timeline.scrollHeight, behavior: didInitialScrollRef.current ? 'smooth' : 'auto' });
+    const isComposing = document.activeElement === textareaRef.current;
+    timeline.scrollTo({
+      top: timeline.scrollHeight,
+      behavior: didInitialScrollRef.current && !isComposing ? 'smooth' : 'auto',
+    });
     didInitialScrollRef.current = true;
   }, [records, thinkingByTurn]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-    textarea.style.height = 'auto';
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 132)}px`;
+    textarea.style.height = '45px';
+    const contentHeight = textarea.scrollHeight;
+    textarea.style.height = `${Math.min(Math.max(contentHeight, 45), 132)}px`;
+    textarea.style.overflowY = contentHeight > 132 ? 'auto' : 'hidden';
   }, [draft]);
 
   const saveSettings = async (next: ConnectionSettings) => {

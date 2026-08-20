@@ -200,8 +200,13 @@ export function chatRecordKey(record: ChatRecord) {
 }
 
 export function mergeChatRecords(current: ChatRecord[], incoming: ChatRecord[]) {
+  if (!incoming.length) return current;
+
   const byKey = new Map<string, ChatRecord>();
   current.forEach((record) => byKey.set(chatRecordKey(record), record));
   incoming.forEach((record) => byKey.set(chatRecordKey(record), record));
-  return [...byKey.values()].sort((left, right) => left.ts.localeCompare(right.ts));
+  const merged = [...byKey.values()].sort((left, right) => left.ts.localeCompare(right.ts));
+  const unchanged = merged.length === current.length
+    && merged.every((record, index) => chatRecordKey(record) === chatRecordKey(current[index]));
+  return unchanged ? current : merged;
 }

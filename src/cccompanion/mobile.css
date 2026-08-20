@@ -16,7 +16,7 @@ body {
 }
 
 .cc-app {
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   max-width: 520px;
   background:
     radial-gradient(circle at 80% 2%, rgba(255, 255, 255, 0.72), transparent 28%),
@@ -83,7 +83,10 @@ body {
 }
 
 .cc-error-banner { margin-top: 3px; border-color: rgba(194, 94, 110, .15); background: rgba(255,239,239,.9); }
-.cc-timeline { padding: 20px 17px 30px; }
+.cc-timeline {
+  padding: 20px 17px calc(env(safe-area-inset-bottom) + 78px);
+  scroll-behavior: auto;
+}
 .cc-empty span { color: var(--cc-rose); }
 
 .cc-message { width: min(82%, 420px); margin-bottom: 20px; }
@@ -144,7 +147,19 @@ body {
   border-left: 1px solid rgba(190, 115, 142, .24);
   color: #9b7884;
 }
-.cc-thinking .cc-markdown { color: inherit; font: italic 11px/1.55 Georgia, "Songti SC", serif; }
+.cc-message.is-assistant .cc-thinking .cc-markdown {
+  color: #76535f;
+  font: italic 11px/1.55 Georgia, "Songti SC", serif;
+}
+.cc-message.is-assistant .cc-thinking .cc-markdown blockquote {
+  color: #80606a;
+  border-left-color: rgba(190, 115, 142, .34);
+}
+.cc-message.is-assistant .cc-thinking .cc-markdown a { color: #a34668; }
+.cc-message.is-assistant .cc-thinking .cc-markdown code {
+  color: #704c59;
+  background: rgba(178, 102, 129, .1);
+}
 
 .cc-tools {
   width: fit-content;
@@ -176,6 +191,10 @@ body {
 .cc-tools li + li { margin-top: 5px; }
 
 .cc-composer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
   grid-template-columns: minmax(0, 1fr) 45px;
   gap: 8px;
   padding: 8px 13px calc(env(safe-area-inset-bottom) + 10px);
@@ -184,7 +203,10 @@ body {
   backdrop-filter: blur(24px) saturate(125%);
 }
 .cc-composer textarea {
+  height: 45px;
   min-height: 45px;
+  max-height: 132px;
+  overflow-y: hidden;
   padding: 12px 15px;
   border: 1px solid rgba(190, 121, 145, .12);
   border-radius: 22px;
