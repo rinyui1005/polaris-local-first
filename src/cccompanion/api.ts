@@ -1,4 +1,10 @@
-import type { ChatRecord, ConnectionSettings } from './types';
+import type {
+  ChatRecord,
+  CompanionStatus,
+  ConnectionSettings,
+  SessionOptions,
+  ThinkingRecord,
+} from './types';
 
 type HistoryResponse = {
   ok?: boolean;
@@ -10,6 +16,27 @@ type HistoryResponse = {
 type SendResponse = {
   ok?: boolean;
   record?: unknown;
+  error?: string;
+};
+
+type PollResponse = {
+  ok?: boolean;
+  chat?: {
+    new_records?: unknown;
+    last_ts?: string | null;
+  };
+  status?: CompanionStatus;
+  error?: string;
+};
+
+type ThinkingResponse = {
+  ok?: boolean;
+  records?: unknown;
+  error?: string;
+};
+
+type SessionOptionsResponse = Partial<SessionOptions> & {
+  ok?: boolean;
   error?: string;
 };
 
@@ -50,6 +77,12 @@ function isChatRecord(value: unknown): value is ChatRecord {
   return typeof record.role === 'string'
     && typeof record.text === 'string'
     && typeof record.ts === 'string';
+}
+
+function isThinkingRecord(value: unknown): value is ThinkingRecord {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.thinking === 'string';
 }
 
 function buildUrl(settings: ConnectionSettings, path: string) {
@@ -103,6 +136,56 @@ export async function fetchHistory(settings: ConnectionSettings, since?: string)
   return body.records.filter(isChatRecord);
 }
 
+export async function pollChat(settings: ConnectionSettings, since?: string) {
+  const query = since ? `?since=${encodeURIComponent(since)}&limit=200` : '?limit=200';
+  const body = await requestJson<PollResponse>(settings, `/chat/poll${query}`);
+  const incoming = body.chat?.new_records;
+  if (!Array.isArray(incoming)) {
+    throw new CompanionRequestError(body.error || '聊天更新格式不正确。');
+  }
+  return {
+    records: incoming.filter(isChatRecord),
+    status: body.status || {},
+    lastTimestamp: body.chat?.last_ts || undefined,
+  };
+}
+
+export async function fetchThinking(settings: ConnectionSettings, turnId: string) {
+  const body = await requestJson<ThinkingResponse>(
+    settings,
+    `/v1/thinking?turn_id=${encodeURIComponent(turnId)}&limit=50`,
+  );
+  if (!Array.isArray(body.records)) return '';
+  return body.records
+    .filter(isThinkingRecord)
+    .map((record) => record.thinking.trim())
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+export async function fetchSessionOptions(settings: ConnectionSettings) {
+  const body = await requestJson<SessionOptionsResponse>(settings, '/session/options');
+  if (!body.current || !Array.isArray(body.models) || !Array.isArray(body.efforts)) {
+    throw new CompanionRequestError(body.error || '暂时读不到 Claude Code 的运行选项。');
+  }
+  return body as SessionOptions;
+}
+
+export async function applySessionOptions(
+  settings: ConnectionSettings,
+  selection: SessionOptions['current'],
+) {
+  const body = await requestJson<SessionOptionsResponse>(settings, '/session/apply', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(selection),
+  });
+  if (!body.current || !Array.isArray(body.models) || !Array.isArray(body.efforts)) {
+    throw new CompanionRequestError(body.error || '切换会话设置失败。');
+  }
+  return body as SessionOptions;
+}
+
 export async function sendMessage(settings: ConnectionSettings, text: string) {
   const body = await requestJson<SendResponse>(settings, '/chat/send', {
     method: 'POST',
@@ -113,7 +196,7 @@ export async function sendMessage(settings: ConnectionSettings, text: string) {
 }
 
 export function chatRecordKey(record: ChatRecord) {
-  return record.turn_id || `${record.ts}\u0000${record.role}\u0000${record.text}`;
+  return `${record.turn_id || ''}\u0000${record.ts}\u0000${record.role}\u0000${record.text}`;
 }
 
 export function mergeChatRecords(current: ChatRecord[], incoming: ChatRecord[]) {
