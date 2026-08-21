@@ -161,6 +161,16 @@
   background: color-mix(in srgb, var(--surface-solid) 92%, var(--surface));
   border: 1px solid color-mix(in srgb, var(--border) 52%, transparent);
 }
+.companion-connected-names {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 10px;
+  flex: 1 1 520px;
+  min-width: 0;
+}
+.companion-connected-names > small {
+  grid-column: 1 / -1;
+}
 .companion-provider-cta {
   margin-top: auto;
   color: color-mix(in srgb, var(--accent) 68%, var(--text) 32%);

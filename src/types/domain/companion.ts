@@ -31,6 +31,12 @@ export interface PolarisCompanionConnection {
   clientSecret: string;
   label: string;
   hostLabel: string;
+  /** User-owned local title for the mirrored conversation. */
+  conversationLabel?: string;
+  /** Last title reported by the remote host, used to avoid overwriting local renames. */
+  remoteConversationLabel?: string;
+  /** User-owned local display name for assistant messages. */
+  collaboratorLabel?: string;
   pushToken: string | null;
   pushPlatform: PolarisCompanionPushPlatform | null;
   remoteThreadId?: string | null;

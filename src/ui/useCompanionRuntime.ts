@@ -89,6 +89,12 @@ function resolveCompanionConnectionPatch(
   if (connection.hostLabel !== response.hostLabel) {
     patch.hostLabel = response.hostLabel;
   }
+  const nextRemoteConversationLabel = response.snapshot && acceptSnapshot
+    ? response.snapshot.conversationTitle?.trim() || ''
+    : connection.remoteConversationLabel ?? '';
+  if ((connection.remoteConversationLabel ?? '') !== nextRemoteConversationLabel) {
+    patch.remoteConversationLabel = nextRemoteConversationLabel;
+  }
   if (connection.remoteThreadId !== nextRemoteThreadId) {
     patch.remoteThreadId = nextRemoteThreadId;
   }
@@ -368,13 +374,26 @@ export function useCompanionRuntime({ enabled = true }: UseCompanionRuntimeOptio
         }
         if (!existingConversation) return;
         if (response.snapshot && acceptSnapshot) {
-          const nextTitle = response.snapshot.conversationTitle?.trim() || connection.label;
+          const remoteTitle = response.snapshot.conversationTitle?.trim() || connection.label;
+          const localTitle = connection.conversationLabel?.trim() || '';
+          const previousRemoteTitle = connection.remoteConversationLabel?.trim() || '';
+          const canAdoptRemoteTitle = !localTitle && (
+            existingConversation.title === '新对话'
+            || existingConversation.title === remoteTitle
+            || (!!previousRemoteTitle && existingConversation.title === previousRemoteTitle)
+          );
+          const nextTitle = localTitle || (canAdoptRemoteTitle ? remoteTitle : existingConversation.title);
           if (nextTitle && nextTitle !== existingConversation.title) {
             chatState.renameConversation(connection.conversationId, nextTitle);
           }
+          const collaboratorLabel = connection.collaboratorLabel?.trim() || '';
           const nextMessages = reconcileCompanionConversationMessages(
             existingConversation.messages,
-            response.snapshot.messages.map(stripCompanionMessage)
+            response.snapshot.messages.map(stripCompanionMessage).map((message) => (
+              collaboratorLabel && message.role === 'assistant'
+                ? { ...message, assistantName: collaboratorLabel }
+                : message
+            ))
           );
           if (!areCompanionMessageListsEqual(existingConversation.messages, nextMessages)) {
             const writableConversation = await chatState.ensureConversationWritable(connection.conversationId);
