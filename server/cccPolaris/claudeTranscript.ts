@@ -70,6 +70,15 @@ export function stripCccTransportTimestamp(value: string) {
 }
 
 /**
+ * Scheduled "autonomous loop" wake-ups re-inject a long standing prompt into
+ * the terminal on a timer. It arrives typed in as if the user sent it, but it
+ * is automation noise, not something the phone-side user actually said.
+ */
+export function isAutonomousLoopHeartbeat(value: string) {
+  return /autonomous[\s-]*loop/iu.test(value);
+}
+
+/**
  * Claude Code may persist the same growing block more than once. Treat a longer
  * prefix-compatible value as a replacement snapshot and only append genuinely
  * new fragments. This is the main guard against repeated thinking summaries.
@@ -202,13 +211,15 @@ export function parseClaudeTranscriptJsonl(
         turnKey = normalizeText(message.id) || identity;
         turnTimestamp = timestamp;
         assistant = null;
-        messages.push({
-          id: stableId('claude-user', turnKey),
-          role: 'user',
-          content: humanText,
-          timestamp,
-          origin: 'user-input'
-        });
+        if (!isAutonomousLoopHeartbeat(humanText)) {
+          messages.push({
+            id: stableId('claude-user', turnKey),
+            role: 'user',
+            content: humanText,
+            timestamp,
+            origin: 'user-input'
+          });
+        }
       }
 
       for (const block of blocks) {

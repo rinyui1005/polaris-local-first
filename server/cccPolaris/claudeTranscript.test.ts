@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isAutonomousLoopHeartbeat,
   mergeClaudeTextSnapshot,
   parseClaudeTranscriptJsonl,
   stripCccTransportTimestamp
@@ -33,7 +34,40 @@ describe('stripCccTransportTimestamp', () => {
   });
 });
 
+describe('isAutonomousLoopHeartbeat', () => {
+  it('flags scheduled wake-up prompts regardless of casing or spacing', () => {
+    expect(isAutonomousLoopHeartbeat('<<autonomous-loop-dynamic>> continue the task')).toBe(true);
+    expect(isAutonomousLoopHeartbeat('Autonomous Loop check-in')).toBe(true);
+  });
+
+  it('leaves ordinary messages untouched', () => {
+    expect(isAutonomousLoopHeartbeat('lyko: 帮我看看今天的日程')).toBe(false);
+  });
+});
+
 describe('parseClaudeTranscriptJsonl', () => {
+  it('hides autonomous-loop heartbeat turns from the mirrored chat', () => {
+    const transcript = [
+      line({
+        type: 'user',
+        uuid: 'row-heartbeat',
+        timestamp: '2026-08-21T01:00:00.000Z',
+        message: { role: 'user', content: '<<autonomous-loop-dynamic>> 继续任务' }
+      }),
+      line({
+        type: 'assistant',
+        uuid: 'row-heartbeat-reply',
+        timestamp: '2026-08-21T01:00:01.000Z',
+        message: { role: 'assistant', content: [{ type: 'text', text: '好的，继续。' }] }
+      })
+    ].join('\n');
+
+    const messages = parseClaudeTranscriptJsonl(transcript);
+    expect(messages.some((message) => message.role === 'user')).toBe(false);
+    expect(messages.some((message) => message.content === '好的，继续。')).toBe(true);
+  });
+
+
   it('produces one deduplicated thinking block and native tool events for a turn', () => {
     const transcript = [
       line({

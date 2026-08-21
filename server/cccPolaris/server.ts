@@ -4,7 +4,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import http, { type IncomingMessage, type ServerResponse } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { parseClaudeTranscriptJsonl, type ClaudeTranscriptMessage } from './claudeTranscript.js';
+import { isAutonomousLoopHeartbeat, parseClaudeTranscriptJsonl, type ClaudeTranscriptMessage } from './claudeTranscript.js';
 
 type JsonObject = Record<string, unknown>;
 
@@ -197,6 +197,7 @@ function mapCccHistory(payload: unknown): ClaudeTranscriptMessage[] {
     const role = record.role === 'assistant' ? 'assistant' : record.role === 'user' ? 'user' : null;
     const content = readString(record.text);
     if (!role || !content) return [];
+    if (role === 'user' && isAutonomousLoopHeartbeat(content)) return [];
     const timestamp = parseRecordTimestamp(record.ts);
     const remoteId = readString(record.turn_id) || `${role}:${timestamp}:${index}:${content}`;
     return [{
