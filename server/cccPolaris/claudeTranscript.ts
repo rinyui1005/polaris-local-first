@@ -198,6 +198,12 @@ export function parseClaudeTranscriptJsonl(
   rows.forEach((row, index) => {
     const rowType = normalizeText(row.type);
     if (rowType !== 'user' && rowType !== 'assistant') return;
+    // Claude Code inserts its own bookkeeping rows (e.g. "[Image: source:
+    // /path]" when it reads a local image file) marked isMeta: true. Those
+    // are internal context, not something the phone-side user said or
+    // something Claude actually replied with, so they should never render
+    // as a chat bubble.
+    if (row.isMeta === true) return;
     const message = isObject(row.message) ? row.message : null;
     if (!message) return;
     const role = normalizeText(message.role) || rowType;

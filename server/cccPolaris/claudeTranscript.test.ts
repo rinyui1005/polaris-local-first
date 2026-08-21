@@ -67,6 +67,40 @@ describe('parseClaudeTranscriptJsonl', () => {
     expect(messages.some((message) => message.content === '好的，继续。')).toBe(true);
   });
 
+  it('hides Claude Code\'s own isMeta bookkeeping rows (e.g. local image path references)', () => {
+    const transcript = [
+      line({
+        type: 'user',
+        uuid: 'row-user-1',
+        timestamp: '2026-08-21T09:51:30.000Z',
+        message: { role: 'user', content: '我测试一下发送图片的功能' }
+      }),
+      line({
+        type: 'user',
+        uuid: 'row-meta-image',
+        isMeta: true,
+        timestamp: '2026-08-21T09:51:37.314Z',
+        message: {
+          role: 'user',
+          content: [{ type: 'text', text: '[Image: source: /home/ubuntu/CcCompanion/apns-server/tokens/attachments/1cf029e203ab4d0a9b41f87a578bf6b5.png]' }]
+        }
+      }),
+      line({
+        type: 'assistant',
+        uuid: 'row-assistant-1',
+        timestamp: '2026-08-21T09:51:40.000Z',
+        message: { role: 'assistant', content: [{ type: 'text', text: '看着呢，一口都不会少。' }] }
+      })
+    ].join('\n');
+
+    const messages = parseClaudeTranscriptJsonl(transcript);
+
+    expect(messages.some((message) => message.content.includes('Image: source:'))).toBe(false);
+    expect(messages.map((message) => message.content)).toEqual([
+      '我测试一下发送图片的功能',
+      '看着呢，一口都不会少。'
+    ]);
+  });
 
   it('produces one deduplicated thinking block and native tool events for a turn', () => {
     const transcript = [
