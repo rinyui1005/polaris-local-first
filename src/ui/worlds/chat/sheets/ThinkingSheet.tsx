@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { ChatMessage, ToolInvocation } from '../../../../types/domain';
 import type { I18nTranslator } from '../../../../i18n';
 import { useI18n } from '../../../../i18n';
@@ -43,16 +43,11 @@ export function ThinkingSheet({
   onClose
 }: ThinkingSheetProps) {
   const { t } = useI18n();
-  const [rawExpanded, setRawExpanded] = useState(false);
   const copy = useMemo(() => createThinkingSummaryCopy(t), [t]);
   const session = useMemo(
     () => (message ? buildThinkingSessionSummary(messages, message.id, copy) : null),
     [copy, message, messages]
   );
-
-  useEffect(() => {
-    setRawExpanded(false);
-  }, [message?.id]);
 
   if (!message || !session) return null;
 
@@ -118,28 +113,6 @@ export function ThinkingSheet({
               </div>
             </article>
           ))}
-        </div>
-
-        <div className="thinking-summary-raw">
-          <button
-            type="button"
-            className="thinking-summary-raw-toggle"
-            onClick={() => setRawExpanded((value) => !value)}
-            aria-expanded={rawExpanded}
-          >
-            <span>{t('chat.thinking.raw')}</span>
-            <Icon name={rawExpanded ? 'chevronUp' : 'chevronDown'} size={14} />
-          </button>
-          {rawExpanded ? (
-            <div className="thinking-summary-raw-sections">
-              {session.rawSections.map((section) => (
-                <section key={section.id} className="thinking-summary-raw-section">
-                  <span className="thinking-summary-raw-kicker">{section.label}</span>
-                  <pre className="thinking-summary-raw-body">{section.content}</pre>
-                </section>
-              ))}
-            </div>
-          ) : null}
         </div>
       </div>
     </div>

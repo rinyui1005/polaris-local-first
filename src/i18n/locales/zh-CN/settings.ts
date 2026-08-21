@@ -16,7 +16,7 @@ export const settings = {
   'settings.gateway.title': '请求入口',
   'settings.gateway.detail': '设置请求经由 Polaris 或自建中转发出',
   'settings.gateway.help': '如果你的 API 需要走代理或自建中转，在这里调整请求发出的入口；一般用户可以先跳过。',
-  'settings.companion.title': '连接电脑端',
+  'settings.companion.title': '连接 Companion',
   'settings.companion.detail': '接入你自己的 Claude Code / Codex 会话',
   'settings.companion.help': '把手机接到自己电脑上正在跑的 Claude Code 或 Codex 会话，消息默认走你自己的网络，不经过 Polaris 官方服务器。',
   'settings.androidUpdate.title': '安卓版更新',
