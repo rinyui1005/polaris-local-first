@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { mergeClaudeTextSnapshot, parseClaudeTranscriptJsonl } from './claudeTranscript.js';
+import {
+  mergeClaudeTextSnapshot,
+  parseClaudeTranscriptJsonl,
+  stripCccTransportTimestamp
+} from './claudeTranscript.js';
 
 function line(value: unknown) {
   return JSON.stringify(value);
@@ -15,6 +19,17 @@ describe('mergeClaudeTextSnapshot', () => {
   it('keeps distinct fragments once each', () => {
     expect(mergeClaudeTextSnapshot('第一段', '第二段')).toBe('第一段\n\n第二段');
     expect(mergeClaudeTextSnapshot('第一段\n\n第二段', '第二段')).toBe('第一段\n\n第二段');
+  });
+});
+
+describe('stripCccTransportTimestamp', () => {
+  it('removes the timestamp injected by CcCompanion without touching the message', () => {
+    expect(stripCccTransportTimestamp('[2026-08-21 08:52:26] lyko我修改了前端，测试连接'))
+      .toBe('lyko我修改了前端，测试连接');
+  });
+
+  it('keeps ordinary bracketed user text intact', () => {
+    expect(stripCccTransportTimestamp('[重要] 这句不要删')).toBe('[重要] 这句不要删');
   });
 });
 
@@ -93,5 +108,16 @@ describe('parseClaudeTranscriptJsonl', () => {
       role: 'assistant',
       thinkingText: '正在响应…'
     });
+  });
+
+  it('does not expose the CcCompanion arrival timestamp in a user bubble', () => {
+    const transcript = line({
+      type: 'user',
+      uuid: 'row-user-timestamped',
+      timestamp: '2026-08-21T00:52:26.000Z',
+      message: { role: 'user', content: '[2026-08-21 08:52:26] 测试连接' }
+    });
+
+    expect(parseClaudeTranscriptJsonl(transcript)[0]?.content).toBe('测试连接');
   });
 });

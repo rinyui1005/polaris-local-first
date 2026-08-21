@@ -58,6 +58,18 @@ function normalizeText(value: unknown) {
 }
 
 /**
+ * CcCompanion prefixes phone messages before typing them into Claude Code so
+ * the terminal has a useful arrival time. That transport metadata should not
+ * become part of the chat bubble shown by Polaris.
+ */
+export function stripCccTransportTimestamp(value: string) {
+  return value.replace(
+    /^\[\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:?\d{2})?\]\s*/u,
+    ''
+  );
+}
+
+/**
  * Claude Code may persist the same growing block more than once. Treat a longer
  * prefix-compatible value as a replacement snapshot and only append genuinely
  * new fragments. This is the main guard against repeated thinking summaries.
@@ -109,11 +121,12 @@ function readContentBlocks(message: JsonObject) {
 }
 
 function readUserText(blocks: JsonObject[]) {
-  return blocks
+  const text = blocks
     .filter((block) => block.type === 'text')
     .map((block) => normalizeText(block.text))
     .filter(Boolean)
     .join('\n\n');
+  return stripCccTransportTimestamp(text).trim();
 }
 
 function readToolResultText(block: JsonObject) {

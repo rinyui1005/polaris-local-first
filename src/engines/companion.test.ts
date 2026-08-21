@@ -98,6 +98,30 @@ describe('reconcileCompanionConversationMessages', () => {
       'local-assistant-1'
     ]);
   });
+
+  it('cleans up an already-persisted duplicate even when the remote reply is shared', () => {
+    const remoteUser = createMessage(
+      'user',
+      '[2026-08-21 08:52:26] 测试连接',
+      undefined,
+      'user-input',
+      'remote-user-1'
+    );
+    remoteUser.timestamp = 1_000;
+    const remoteReply = createMessage('assistant', '收到了。', undefined, 'assistant-reply', 'assistant-1');
+    remoteReply.timestamp = 2_000;
+    const duplicatedLocalUser = createMessage('user', '测试连接', undefined, 'user-input', 'local-user-1');
+    duplicatedLocalUser.timestamp = 1_100;
+
+    const nextMessages = reconcileCompanionConversationMessages(
+      [remoteUser, remoteReply, duplicatedLocalUser],
+      [remoteUser, remoteReply]
+    );
+
+    expect(nextMessages).toHaveLength(2);
+    expect(nextMessages.map((message) => message.id)).toEqual(['local-user-1', 'assistant-1']);
+    expect(nextMessages[0].content).toContain('测试连接');
+  });
 });
 
 describe('shouldAcceptCompanionSnapshot', () => {

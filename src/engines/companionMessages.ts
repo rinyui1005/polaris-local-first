@@ -9,8 +9,15 @@ export function stripCompanionMessage(message: PolarisCompanionSnapshot['message
 }
 
 function normalizeCompanionMessageContent(content: string) {
-  return content.trim();
+  return content
+    .replace(
+      /^\[\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:?\d{2})?\]\s*/u,
+      ''
+    )
+    .trim();
 }
+
+const COMPANION_ACK_WINDOW_MS = 5 * 60 * 1000;
 
 function serializeCompanionMessage(message: ChatMessage) {
   return JSON.stringify({
@@ -83,7 +90,7 @@ export function reconcileCompanionConversationMessages(
   }
 
   const nextRemoteMessages = remoteMessages.map((message, index) => {
-    if (index <= lastSharedRemoteIndex || message.role !== 'user') {
+    if (message.role !== 'user') {
       return message;
     }
     const nextPending = trailingPendingUsers[0];
@@ -91,6 +98,10 @@ export function reconcileCompanionConversationMessages(
       return message;
     }
     if (normalizeCompanionMessageContent(message.content) !== normalizeCompanionMessageContent(nextPending.content)) {
+      return message;
+    }
+    const closeInTime = Math.abs(message.timestamp - nextPending.timestamp) <= COMPANION_ACK_WINDOW_MS;
+    if (index <= lastSharedRemoteIndex && !closeInTime) {
       return message;
     }
     trailingPendingUsers.shift();
