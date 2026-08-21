@@ -229,6 +229,9 @@ async function buildSnapshot(token: string) {
     || status.typing === true
     || status.busy === true
     || status.running === true;
+  if (process.env.POLARIS_DEBUG_COMPANION_STATUS === '1') {
+    console.error(`[companion-status-debug] ${new Date().toISOString()} active=${active} payload=${JSON.stringify(status)} transcriptMtimeMs=${transcript?.mtimeMs ?? 'n/a'}`);
+  }
   const fallbackMessages = mapCccHistory(historyResult.payload);
   const transcriptMessages = transcript
     ? parseClaudeTranscriptJsonl(transcript.text, { active })
