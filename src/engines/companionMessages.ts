@@ -137,18 +137,9 @@ export function reconcileCompanionConversationMessages(
     return { ...message, id: anchor.id, timestamp: anchor.timestamp };
   });
 
-  const newestRemoteTimestamp = remoteMessages[remoteMessages.length - 1]?.timestamp ?? 0;
-  const unacknowledgedLocalTail = trailingLocalMessages.filter((message) => {
-    if (consumedLocalMessageIds.has(message.id)) return false;
-    // A pending user bubble that the remote transcript has already moved far
-    // past (and that we still couldn't match, even loosely) is stale rather
-    // than "about to arrive" — keeping it would permanently push every
-    // future remote message ahead of it in the timeline.
-    if (message.role === 'user' && newestRemoteTimestamp - message.timestamp > COMPANION_ACK_WINDOW_MS) {
-      return false;
-    }
-    return true;
-  });
+  const unacknowledgedLocalTail = trailingLocalMessages.filter(
+    (message) => !consumedLocalMessageIds.has(message.id)
+  );
 
   if (unacknowledgedLocalTail.length === 0) {
     return nextRemoteMessages;

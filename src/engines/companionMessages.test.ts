@@ -60,23 +60,6 @@ describe('reconcileCompanionConversationMessages', () => {
     expect(result.map((message) => message.id)).toEqual(['local-followup', 'remote-reply']);
   });
 
-  it('drops a pending bubble the remote transcript has long since moved past, instead of corrupting order forever', () => {
-    const local = [userMessage('local-stale', '一条从没被匹配上的消息', 1000)];
-    const remote = [
-      assistantMessage('remote-reply-1', '第一条回复', 2000),
-      userMessage('remote-user-2', '完全不同的下一句话', 20 * 60 * 1000),
-      assistantMessage('remote-reply-2', '第二条回复', 21 * 60 * 1000)
-    ];
-
-    const result = reconcileCompanionConversationMessages(local, remote);
-
-    expect(result.map((message) => message.id)).toEqual([
-      'remote-reply-1',
-      'remote-user-2',
-      'remote-reply-2'
-    ]);
-  });
-
   it('keeps a genuinely unmatched but recent pending message appended at the end', () => {
     const local = [
       userMessage('local-old', '已经同步过的消息', 100),

@@ -33,7 +33,7 @@ export function CompanionStreamingDebugBadge() {
       style={{
         position: 'fixed',
         left: 8,
-        bottom: 8,
+        top: 'max(8px, env(safe-area-inset-top))',
         zIndex: 99999,
         maxWidth: '92vw',
         padding: '6px 8px',

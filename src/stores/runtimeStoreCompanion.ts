@@ -96,6 +96,7 @@ export function cloneCompanionSnapshot(
       toolInvocation: message.toolInvocation ? { ...message.toolInvocation } : undefined,
       cardReference: undefined
     })),
-    updatedAt: snapshot.updatedAt
+    updatedAt: snapshot.updatedAt,
+    generating: snapshot.generating
   };
 }
