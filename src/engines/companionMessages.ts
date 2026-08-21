@@ -89,33 +89,66 @@ export function reconcileCompanionConversationMessages(
     }
   }
 
+  const pendingQueue = [...trailingPendingUsers];
+
   const nextRemoteMessages = remoteMessages.map((message, index) => {
-    if (message.role !== 'user') {
+    if (message.role !== 'user' || pendingQueue.length === 0) {
       return message;
     }
-    const nextPending = trailingPendingUsers[0];
-    if (!nextPending) {
+    const head = pendingQueue[0];
+    const eligibleAtThisIndex =
+      index > lastSharedRemoteIndex
+      || Math.abs(message.timestamp - head.timestamp) <= COMPANION_ACK_WINDOW_MS;
+    if (!eligibleAtThisIndex) {
       return message;
     }
-    if (normalizeCompanionMessageContent(message.content) !== normalizeCompanionMessageContent(nextPending.content)) {
+
+    const remoteNormalized = normalizeCompanionMessageContent(message.content);
+    if (remoteNormalized === normalizeCompanionMessageContent(head.content)) {
+      pendingQueue.shift();
+      consumedLocalMessageIds.add(head.id);
+      return { ...message, id: head.id, timestamp: head.timestamp };
+    }
+
+    // CcCompanion can fold several phone messages that were still queued
+    // when Claude Code wasn't ready to read input yet (e.g. an attachment
+    // caption immediately followed by a quick "are you there?") into a
+    // single injected turn. If this remote turn's text contains every
+    // still-pending message's content in order, treat all of them as
+    // represented by this one message instead of leaving them stranded as
+    // separate duplicate bubbles that also corrupt the ordering of every
+    // later message.
+    let cursor = 0;
+    let matchedCount = 0;
+    for (const pending of pendingQueue) {
+      const pendingNormalized = normalizeCompanionMessageContent(pending.content);
+      if (!pendingNormalized) break;
+      const foundAt = remoteNormalized.indexOf(pendingNormalized, cursor);
+      if (foundAt === -1) break;
+      cursor = foundAt + pendingNormalized.length;
+      matchedCount += 1;
+    }
+    if (matchedCount === 0) {
       return message;
     }
-    const closeInTime = Math.abs(message.timestamp - nextPending.timestamp) <= COMPANION_ACK_WINDOW_MS;
-    if (index <= lastSharedRemoteIndex && !closeInTime) {
-      return message;
-    }
-    trailingPendingUsers.shift();
-    consumedLocalMessageIds.add(nextPending.id);
-    return {
-      ...message,
-      id: nextPending.id,
-      timestamp: nextPending.timestamp
-    };
+    const consumed = pendingQueue.splice(0, matchedCount);
+    consumed.forEach((entry) => consumedLocalMessageIds.add(entry.id));
+    const anchor = consumed[consumed.length - 1];
+    return { ...message, id: anchor.id, timestamp: anchor.timestamp };
   });
 
-  const unacknowledgedLocalTail = trailingLocalMessages.filter(
-    (message) => !consumedLocalMessageIds.has(message.id)
-  );
+  const newestRemoteTimestamp = remoteMessages[remoteMessages.length - 1]?.timestamp ?? 0;
+  const unacknowledgedLocalTail = trailingLocalMessages.filter((message) => {
+    if (consumedLocalMessageIds.has(message.id)) return false;
+    // A pending user bubble that the remote transcript has already moved far
+    // past (and that we still couldn't match, even loosely) is stale rather
+    // than "about to arrive" — keeping it would permanently push every
+    // future remote message ahead of it in the timeline.
+    if (message.role === 'user' && newestRemoteTimestamp - message.timestamp > COMPANION_ACK_WINDOW_MS) {
+      return false;
+    }
+    return true;
+  });
 
   if (unacknowledgedLocalTail.length === 0) {
     return nextRemoteMessages;
