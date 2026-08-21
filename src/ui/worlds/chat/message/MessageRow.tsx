@@ -138,6 +138,13 @@ function MessageRowComponent({
   const showStreamingPrelude = streamingChrome.showPrelude;
   const showStreamingHint = streamingChrome.showHint;
   const showStreamingLive = streamingChrome.showLiveHint;
+  // Some sources (e.g. a companion reply whose transcript only flushes once
+  // per turn) can go from "sending" to "content fully present" in the same
+  // poll tick, so the live-lifecycle flag above can already be false by the
+  // time the text shows up at all. A message that's still very fresh gets
+  // the smooth reveal too, so a reply that lands in one big block doesn't
+  // just pop in instead of reading like it arrived.
+  const isFreshAssistantContent = isAssistantReply && Date.now() - message.timestamp < 15000;
   const collapseThinkingProjection =
     state.isThinkingCollapsed
     || toolMessages.length > 0
@@ -373,7 +380,7 @@ function MessageRowComponent({
                   collapseThinkingProjection={collapseThinkingProjection}
                   showThinking={showThinking}
                   preferInlineCode={showStreamingLive}
-                  smoothStreamingText={showStreamingLive}
+                  smoothStreamingText={showStreamingLive || isFreshAssistantContent}
                   onToggleCodeExpanded={() => actions.toggleCodeExpanded(message.id)}
                   onApplyCustomCss={actions.applyCustomCss}
                 />
