@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { AppShellOverlays } from '../AppShellOverlays';
+import { CompanionStreamingDebugBadge } from './CompanionStreamingDebugBadge';
 import { AppReplyNotificationStack } from './AppReplyNotificationStack';
 import { DesktopAppShellFrame } from './DesktopAppShellFrame';
 import { MobileAppShellFrame } from './MobileAppShellFrame';
@@ -174,6 +175,7 @@ export function AppShellView({
         onOpenBackup={onOpenBackupFromReadFailure}
       />
       <AppShellOverlays {...overlaysProps} />
+      <CompanionStreamingDebugBadge />
     </main>
   );
 }
