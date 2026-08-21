@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import type { PolarisCompanionConnection } from '../types/domain';
-import { resolveCompanionConnectionSyncKey } from './useCompanionRuntime';
+import type { PolarisCompanionConnection, PolarisCompanionSnapshot } from '../types/domain';
+import { resolveCompanionConnectionSyncKey, shouldStoreCompanionSnapshot } from './useCompanionRuntime';
+
+function createSnapshot(patch: Partial<PolarisCompanionSnapshot> = {}): PolarisCompanionSnapshot {
+  return {
+    hostId: 'host-1',
+    hostLabel: 'Claude Code · VPS',
+    threadKey: 'thread-1',
+    conversationTitle: 'Claude Code',
+    collaboratorId: null,
+    collaboratorName: 'Claude Code',
+    messages: [],
+    updatedAt: 1000,
+    ...patch
+  };
+}
 
 function createConnection(patch: Partial<PolarisCompanionConnection> = {}): PolarisCompanionConnection {
   return {
@@ -53,5 +67,21 @@ describe('resolveCompanionConnectionSyncKey', () => {
     ]);
 
     expect(targetKey).not.toBe(baseKey);
+  });
+});
+
+describe('shouldStoreCompanionSnapshot', () => {
+  it('detects a generating-only change so the live "thinking" indicator can turn on', () => {
+    const idle = createSnapshot({ generating: false });
+    const typing = createSnapshot({ generating: true });
+
+    expect(shouldStoreCompanionSnapshot(idle, typing)).toBe(true);
+  });
+
+  it('treats an unset generating flag as false', () => {
+    const withoutFlag = createSnapshot();
+    const explicitlyIdle = createSnapshot({ generating: false });
+
+    expect(shouldStoreCompanionSnapshot(withoutFlag, explicitlyIdle)).toBe(false);
   });
 });

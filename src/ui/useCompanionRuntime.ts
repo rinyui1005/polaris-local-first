@@ -56,11 +56,12 @@ function resolveSnapshotRevision(snapshot: PolarisCompanionSnapshot | null | und
     snapshot.conversationTitle ?? '',
     snapshot.collaboratorId ?? '',
     snapshot.collaboratorName ?? '',
-    snapshot.messages.length
+    snapshot.messages.length,
+    snapshot.generating ?? false
   ].join('|');
 }
 
-function shouldStoreCompanionSnapshot(
+export function shouldStoreCompanionSnapshot(
   currentSnapshot: PolarisCompanionSnapshot | null | undefined,
   nextSnapshot: PolarisCompanionSnapshot | null
 ) {
