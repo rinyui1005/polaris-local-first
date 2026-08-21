@@ -1,9 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { submitCompanionMessage } from './chatCompanionSubmit';
-import { sendCompanionClientCommand } from '../../engines/companionApi';
+import { sendCompanionClientCommand, uploadCompanionClientAttachment } from '../../engines/companionApi';
+import { getAssetBlob } from '../../infrastructure/assetStore';
 
 vi.mock('../../engines/companionApi', () => ({
-  sendCompanionClientCommand: vi.fn(() => Promise.resolve())
+  sendCompanionClientCommand: vi.fn(() => Promise.resolve()),
+  uploadCompanionClientAttachment: vi.fn(() => Promise.resolve())
+}));
+
+vi.mock('../../infrastructure/assetStore', () => ({
+  getAssetBlob: vi.fn()
 }));
 
 const connection = {
@@ -93,5 +99,48 @@ describe('submitCompanionMessage', () => {
     expect(setInputDraft).not.toHaveBeenCalled();
     expect(sendCompanionClientCommand).not.toHaveBeenCalled();
     expect(setCommandStatus).toHaveBeenCalledWith('读取当前对话历史失败，先别发送，避免用空历史继续。', true);
+  });
+
+  it('uploads a selected attachment with its caption instead of sending a text-only command', async () => {
+    const blob = new Blob(['image'], { type: 'image/png' });
+    vi.mocked(getAssetBlob).mockResolvedValue(blob);
+    vi.mocked(sendCompanionClientCommand).mockClear();
+    vi.mocked(uploadCompanionClientAttachment).mockClear();
+
+    await submitCompanionMessage({
+      inputDraft: '看看这张图',
+      pendingAttachments: [{
+        id: 'attachment-1',
+        assetId: 'asset-1',
+        kind: 'image',
+        name: '测试图片.png',
+        mimeType: 'image/png',
+        size: blob.size
+      }],
+      pendingCardReference: null,
+      activeConversation: {
+        id: 'conv-companion',
+        collaboratorId: 'companion-1',
+        messages: []
+      }
+    }, {
+      ensureConversationWritable: vi.fn(async (conversationId: string) => ({
+        conversationId,
+        conversation: { id: conversationId } as never,
+        messages: []
+      })),
+      addMessage: vi.fn(),
+      setInputDraft: vi.fn(),
+      clearPendingAttachments: vi.fn(),
+      clearPendingCardReference: vi.fn(),
+      setCommandStatus: vi.fn()
+    }, connection);
+
+    expect(uploadCompanionClientAttachment).toHaveBeenCalledWith(expect.objectContaining({
+      filename: '测试图片.png',
+      text: '看看这张图',
+      blob
+    }));
+    expect(sendCompanionClientCommand).not.toHaveBeenCalled();
   });
 });

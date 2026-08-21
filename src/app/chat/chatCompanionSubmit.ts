@@ -1,5 +1,6 @@
 import { createMessage } from '../../engines/chatMessageFactory';
-import { sendCompanionClientCommand } from '../../engines/companionApi';
+import { sendCompanionClientCommand, uploadCompanionClientAttachment } from '../../engines/companionApi';
+import { getAssetBlob } from '../../infrastructure/assetStore';
 import { reportPersistenceError } from '../../infrastructure/persistenceDiagnostics';
 import type { ChatAttachment, ChatCardReference, ChatMessage, PolarisCompanionConnection } from '../../types/domain';
 import type { WritableConversationBody } from '../../stores/chatStore';
@@ -35,9 +36,9 @@ export async function submitCompanionMessage(
   connection: PolarisCompanionConnection
 ) {
   const raw = state.inputDraft.trim();
-  if (!raw) return;
-  if (state.pendingAttachments.length > 0 || state.pendingCardReference) {
-    handlers.setCommandStatus('电脑端 companion 第一版先只收纯文本。', true);
+  if (!raw && state.pendingAttachments.length === 0) return;
+  if (state.pendingCardReference) {
+    handlers.setCommandStatus('电脑端 companion 暂时还不能发送指定卡片。', true);
     return;
   }
   if (!state.activeConversation) {
@@ -45,7 +46,8 @@ export async function submitCompanionMessage(
     return;
   }
 
-  const optimisticMessage = createMessage('user', raw, undefined, 'user-input');
+  const attachments = state.pendingAttachments.length ? state.pendingAttachments : undefined;
+  const optimisticMessage = createMessage('user', raw, attachments, 'user-input');
   let writableSession: WritableConversationBody | null = null;
   try {
     writableSession = await handlers.ensureConversationWritable(state.activeConversation.id);
@@ -75,6 +77,27 @@ export async function submitCompanionMessage(
       operation: 'before-companion-send'
     }, error);
     handlers.setCommandStatus('本机保存还没有完成，这次没有发送到电脑端。消息仍留在当前界面，请先不要关闭 Polaris。', true);
+    return;
+  }
+
+  if (state.pendingAttachments.length > 0) {
+    for (const [index, attachment] of state.pendingAttachments.entries()) {
+      const blob = await getAssetBlob(attachment.assetId);
+      if (!blob) {
+        handlers.setCommandStatus(`附件“${attachment.name}”的本地内容已经丢失，没有发送。`, true);
+        return;
+      }
+      await uploadCompanionClientAttachment({
+        relayUrl: connection.relayUrl,
+        hostId: connection.hostId,
+        clientId: connection.clientId,
+        clientSecret: connection.clientSecret,
+        filename: attachment.name,
+        text: index === 0 ? raw : '',
+        blob
+      });
+    }
+    handlers.setCommandStatus(state.pendingAttachments.length === 1 ? '附件已经送到电脑端了。' : '附件们已经送到电脑端了。');
     return;
   }
 

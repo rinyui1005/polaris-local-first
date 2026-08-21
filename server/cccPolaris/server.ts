@@ -104,6 +104,21 @@ async function readJsonBody(request: IncomingMessage, limit = 1024 * 1024) {
   }
 }
 
+async function readRawBody(request: IncomingMessage, limit = 50 * 1024 * 1024) {
+  const declaredLength = Number.parseInt(request.headers['content-length'] || '0', 10);
+  if (Number.isFinite(declaredLength) && declaredLength > limit) throw new Error('attachment too large (max 50MB)');
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of request) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += buffer.length;
+    if (size > limit) throw new Error('attachment too large (max 50MB)');
+    chunks.push(buffer);
+  }
+  if (size === 0) throw new Error('attachment is empty');
+  return Buffer.concat(chunks);
+}
+
 function readString(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
 }
@@ -314,6 +329,46 @@ async function handleCompanionRoute(
   sendError(response, 404, 'not found');
 }
 
+async function handleCompanionUploadRoute(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestUrl: URL
+) {
+  if (request.method !== 'POST') {
+    sendError(response, 405, 'method not allowed');
+    return;
+  }
+  const token = readString(request.headers['x-companion-client-secret']);
+  if (!(await validateCccToken(token))) {
+    sendError(response, 401, '访问密钥已失效，请重新连接 Claude Code。');
+    return;
+  }
+  const filename = requestUrl.searchParams.get('filename')?.trim() || 'upload.bin';
+  const text = requestUrl.searchParams.get('text')?.trim() || '';
+  let bytes: Buffer;
+  try {
+    bytes = await readRawBody(request);
+  } catch (error) {
+    sendError(response, 400, error instanceof Error ? error.message : '读取附件失败。');
+    return;
+  }
+  const params = new URLSearchParams({ filename, role: 'user' });
+  if (text) params.set('text', text);
+  const { response: cccResponse, payload } = await requestCcc(token, `/chat/upload?${params.toString()}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': request.headers['content-type'] || 'application/octet-stream'
+    },
+    body: bytes
+  });
+  if (!cccResponse.ok) {
+    const message = isObject(payload) ? readString(payload.error) : '';
+    sendError(response, cccResponse.status, message || '附件没有送进 Claude Code。');
+    return;
+  }
+  sendJson(response, 200, payload ?? { ok: true });
+}
+
 function proxyToCcc(request: IncomingMessage, response: ServerResponse, requestUrl: URL) {
   const target = new URL(`${requestUrl.pathname}${requestUrl.search}`, cccBackend);
   const headers = { ...request.headers, host: cccBackend.host };
@@ -400,6 +455,13 @@ const server = http.createServer((request, response) => {
   }
 
   if (requestUrl.pathname.startsWith('/api/companion/polaris/client/')) {
+    if (requestUrl.pathname === '/api/companion/polaris/client/upload') {
+      void handleCompanionUploadRoute(request, response, requestUrl).catch(() => {
+        if (!response.headersSent) sendError(response, 500, 'Companion 附件上传失败。');
+        else response.destroy();
+      });
+      return;
+    }
     void handleCompanionRoute(request, response, requestUrl.pathname).catch(() => {
       if (!response.headersSent) sendError(response, 500, 'Companion 请求失败。');
       else response.destroy();

@@ -44,6 +44,28 @@ async function postJson<T>(url: string, body: JsonRecord): Promise<T> {
   return payload as T;
 }
 
+async function readCompanionError(response: Response) {
+  const payload: unknown = await response.json().catch(() => null);
+  if (
+    typeof payload === 'object'
+    && payload
+    && 'error' in payload
+  ) {
+    const error = payload.error;
+    if (typeof error === 'string' && error.trim()) return error;
+    if (
+      typeof error === 'object'
+      && error
+      && 'message' in error
+      && typeof error.message === 'string'
+      && error.message.trim()
+    ) {
+      return error.message;
+    }
+  }
+  return `Companion 请求失败：HTTP ${response.status}`;
+}
+
 function isUserOwnedRelayHostname(hostname: string) {
   const normalized = hostname.trim().toLowerCase();
   if (!normalized) return false;
@@ -226,6 +248,32 @@ export async function sendCompanionClientCommand(input: {
     buildCompanionEndpoint(input.relayUrl, '/api/companion/polaris/client/command'),
     input
   );
+}
+
+export async function uploadCompanionClientAttachment(input: {
+  relayUrl: string;
+  hostId: string;
+  clientId: string;
+  clientSecret: string;
+  filename: string;
+  text: string;
+  blob: Blob;
+}) {
+  const endpoint = new URL(buildCompanionEndpoint(input.relayUrl, '/api/companion/polaris/client/upload'));
+  endpoint.searchParams.set('hostId', input.hostId);
+  endpoint.searchParams.set('clientId', input.clientId);
+  endpoint.searchParams.set('filename', input.filename);
+  if (input.text.trim()) endpoint.searchParams.set('text', input.text.trim());
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': input.blob.type || 'application/octet-stream',
+      'X-Companion-Client-Secret': input.clientSecret
+    },
+    body: input.blob
+  });
+  if (!response.ok) throw new Error(await readCompanionError(response));
+  return await response.json() as { ok: true; record?: unknown };
 }
 
 export async function registerCompanionClientPushToken(input: {
