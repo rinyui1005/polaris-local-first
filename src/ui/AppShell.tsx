@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect, useRef } from 'react';
 import { AppShellView } from './app-shell/AppShellView';
 import { useAppRuntime } from './app-shell/useAppRuntime';
 import { useAppShellController } from './app-shell/useAppShellController';
@@ -8,6 +8,7 @@ import { ScreenshotDebugOverlay } from './ScreenshotDebugOverlay';
 import { RequestDebugOverlay } from './RequestDebugOverlay';
 import { closeDebugSurfaces } from './developer/debugSurfaceState';
 import { useSpaceStore } from '../stores/spaceStore';
+import { useRuntimeStore } from '../stores/runtimeStore';
 import { shouldShowWorldSwitchVeil } from '../app/shell/worldSwitchVeilVisibility';
 
 const AssetGovernanceDebugLayer = lazy(() =>
@@ -16,6 +17,8 @@ const AssetGovernanceDebugLayer = lazy(() =>
 
 export function AppShell() {
   const controller = useAppShellController();
+  const companionConnections = useRuntimeStore((state) => state.companionConnections);
+  const checkedCccCompanion = useRef(false);
   const appLanguage = useSpaceStore((state) => state.appLanguage);
   const screenshotDebugOverlayEnabled = useSpaceStore((state) => state.screenshotDebugOverlayEnabled);
   const appRuntime = useAppRuntime({
@@ -31,6 +34,27 @@ export function AppShell() {
     onRetryPersistenceReadFailure: appRuntime.retryPersistenceReadFailure,
     onOpenBackupFromReadFailure: controller.openBackupSettings
   });
+
+  useEffect(() => {
+    if (
+      checkedCccCompanion.current
+      || !appRuntime.persistentStoreLifecycle.startupStoresReady
+      || companionConnections.length > 0
+      || typeof window === 'undefined'
+    ) return;
+
+    checkedCccCompanion.current = true;
+    void fetch('/proxy-health', {
+      cache: 'no-store'
+    })
+      .then(async (response) => response.ok ? await response.json() as { mode?: string } : null)
+      .then((payload) => {
+        if (payload?.mode === 'polaris-native-ccc') {
+          controller.openCompanionSetup();
+        }
+      })
+      .catch(() => undefined);
+  }, [appRuntime.persistentStoreLifecycle.startupStoresReady, companionConnections.length, controller]);
 
   return (
     <>

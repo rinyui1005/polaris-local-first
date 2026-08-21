@@ -20,6 +20,7 @@
     "selfhost:build": "tsc -p tsconfig.selfhost.json",
     "selfhost:prepare": "npm run build && npm run selfhost:build",
     "selfhost:start": "node server-dist/server/selfhost/server.js",
+    "ccc:selfhost:start": "node server-dist/server/cccPolaris/server.js",
     "selfhost:traffic": "tsx tools/selfhost-traffic-report.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:extra": "tsc --noEmit -p tsconfig.verify.json",

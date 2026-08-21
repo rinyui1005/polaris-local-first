@@ -25,7 +25,7 @@ import { runCompanionHostCommand } from './companion/companionHostCommandRuntime
 import { useCompanionNativePushRegistration } from './companion/useCompanionNativePushRegistration';
 import type { PolarisCompanionConnection, PolarisCompanionSnapshot, World } from '../types/domain';
 
-const COMPANION_CHAT_SYNC_INTERVAL_MS = 2000;
+const COMPANION_CHAT_SYNC_INTERVAL_MS = 750;
 const COMPANION_COLLECTION_SYNC_INTERVAL_MS = 5000;
 
 function resolveCompanionSyncInterval(activeWorld: World) {

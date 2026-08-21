@@ -326,6 +326,7 @@ export function useAppShellController() {
     collectionCreateCustomCollaborator: overlays.collectionCreateCustomCollaborator,
     collectionOpenProviderSettings: overlays.collectionOpenProviderSettings,
     collectionOpenSettings: overlays.collectionOpenSettings,
+    openCompanionSetup: () => overlays.modals.setCompanionSetupOpen(true),
     openBackupSettings: () => overlays.openMenuAt('backup'),
     collectionOpenDesktopLocalSettings: overlays.collectionOpenDesktopLocalSettings,
     collectionDeleteCollaborator: overlays.collaboratorActions.deleteCollaboratorFromPanel,

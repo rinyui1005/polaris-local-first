@@ -22,7 +22,9 @@ export function createCompanionPersonaProjection(
   snapshot: PolarisCompanionSnapshot | null
 ): Persona {
   const remoteCollaboratorName = snapshot?.collaboratorName?.trim() || null;
-  const sourceLabel = connection.source === 'codex' ? 'Codex' : 'Polaris';
+  const sourceLabel = connection.source === 'codex'
+    ? (connection.hostLabel.includes('Claude Code') ? 'Claude Code' : 'Codex')
+    : 'Polaris';
   const displayName = connection.label.trim() || connection.hostLabel.trim() || '电脑端';
   const description = remoteCollaboratorName
     ? `远程协作端 · 当前由 ${remoteCollaboratorName} 挂在电脑上的 ${sourceLabel} 会话继续活着。`

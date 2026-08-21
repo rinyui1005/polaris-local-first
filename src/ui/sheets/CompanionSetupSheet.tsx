@@ -29,6 +29,7 @@ export function CompanionSetupSheet({ open, onClose }: CompanionSetupSheetProps)
   const companionConnections = useRuntimeStore((state) => state.companionConnections);
   const companionSnapshots = useRuntimeStore((state) => state.companionSnapshots);
   const setCompanionHost = useRuntimeStore((state) => state.setCompanionHost);
+  const [cccSecret, setCccSecret] = useState('');
   const [clientRelayUrl, setClientRelayUrl] = useState(() => resolveDefaultCompanionRelayUrl());
   const [pairCode, setPairCode] = useState('');
   const [commandStatus, setCommandStatus] = useState<{ text: string; isError: boolean } | null>(null);
@@ -75,6 +76,63 @@ export function CompanionSetupSheet({ open, onClose }: CompanionSetupSheetProps)
             <span className="companion-setup-kicker">Remote Companion</span>
             <h2>这里接的是你自己的电脑端。</h2>
             <p>一人一器：电脑是 relay 和执行宿主，手机只是接管入口。消息正文默认不走 Polaris 官方服务器，除非你主动把 Relay 地址填成那条公共服务。</p>
+          </section>
+
+          <section className="ps-section companion-provider-card companion-provider-card--priority">
+            <div className="companion-provider-card-head">
+              <span className="companion-provider-kicker">VPS Claude Code</span>
+              <strong>连接你的 CcCompanion</strong>
+            </div>
+            <p>输入现有的 CCC 访问密钥即可。密钥只保存在这台设备的 Polaris 数据中，不会写进网页源码或 Git。</p>
+            <label className="ps-field">
+              <span>CCC 访问密钥</span>
+              <input
+                className="ps-input"
+                type="password"
+                value={cccSecret}
+                onChange={(event) => setCccSecret(event.target.value)}
+                placeholder="输入你的 shared_secret"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </label>
+            <div className="companion-provider-actions">
+              <button
+                type="button"
+                className="ps-primary"
+                disabled={connecting || !cccSecret.trim()}
+                onClick={() => {
+                  if (connecting || typeof window === 'undefined') return;
+                  setConnecting(true);
+                  setCommandStatus(null);
+                  void connectCompanionFromPairCode({
+                    relayUrl: window.location.origin,
+                    pairCode: cccSecret.trim(),
+                    label: 'iPhone'
+                  })
+                    .then(() => {
+                      setCccSecret('');
+                      setCommandStatus({ text: 'Claude Code 已连接，正在打开实时会话。', isError: false });
+                      onClose();
+                    })
+                    .catch((error) => {
+                      setCommandStatus({
+                        text: error instanceof Error ? error.message : 'CCC 连接失败。',
+                        isError: true
+                      });
+                    })
+                    .finally(() => {
+                      setConnecting(false);
+                    });
+                }}
+              >
+                {connecting ? '连接中…' : '连接 Claude Code'}
+              </button>
+            </div>
+            {commandStatus ? (
+              <small className={commandStatus.isError ? 'ps-error' : 'ps-success'}>{commandStatus.text}</small>
+            ) : null}
           </section>
 
           <section className="ps-section companion-provider-card companion-provider-card--priority">
