@@ -37,6 +37,12 @@ export interface PolarisCompanionConnection {
   remoteConversationLabel?: string;
   /** User-owned local display name for assistant messages. */
   collaboratorLabel?: string;
+  /** User-owned override for the identity tab's "your name" field. */
+  userNameOverride?: string;
+  /** User-owned override for the identity tab's "collaborator purpose" field. */
+  purposeOverride?: string;
+  /** User-owned override for the identity tab's description field. */
+  descriptionOverride?: string;
   pushToken: string | null;
   pushPlatform: PolarisCompanionPushPlatform | null;
   remoteThreadId?: string | null;

@@ -29,8 +29,6 @@ export function CompanionSetupSheet({ open, onClose }: CompanionSetupSheetProps)
   const companionConnections = useRuntimeStore((state) => state.companionConnections);
   const companionSnapshots = useRuntimeStore((state) => state.companionSnapshots);
   const setCompanionHost = useRuntimeStore((state) => state.setCompanionHost);
-  const updateCompanionConnection = useRuntimeStore((state) => state.updateCompanionConnection);
-  const conversations = useChatStore((state) => state.conversations);
   const [cccSecret, setCccSecret] = useState('');
   const [clientRelayUrl, setClientRelayUrl] = useState(() => resolveDefaultCompanionRelayUrl());
   const [pairCode, setPairCode] = useState('');
@@ -327,14 +325,6 @@ export function CompanionSetupSheet({ open, onClose }: CompanionSetupSheetProps)
               <div className="companion-connected-list">
                 {sortedConnections.map((connection) => {
                   const snapshot = companionSnapshots[connection.id] ?? null;
-                  const conversation = conversations.find((entry) => entry.id === connection.conversationId) ?? null;
-                  const conversationLabel = connection.conversationLabel?.trim()
-                    || conversation?.title.trim()
-                    || snapshot?.conversationTitle?.trim()
-                    || 'Claude Code';
-                  const collaboratorLabel = connection.collaboratorLabel?.trim()
-                    || snapshot?.collaboratorName?.trim()
-                    || 'Claude Code';
                   return (
                     <article key={connection.id} className="companion-connected-item">
                       <div>
@@ -344,58 +334,6 @@ export function CompanionSetupSheet({ open, onClose }: CompanionSetupSheetProps)
                           <span>{connection.relayUrl}</span>
                           <span>{snapshot?.collaboratorName ?? '等待电脑端快照'}</span>
                         </div>
-                      </div>
-                      <div className="companion-connected-names">
-                        <label className="ps-field">
-                          <span>房间名</span>
-                          <input
-                            key={`${connection.id}:room:${connection.label}`}
-                            className="ps-input"
-                            defaultValue={connection.label}
-                            onBlur={(event) => {
-                              const label = event.target.value.trim();
-                              if (!label) {
-                                event.target.value = connection.label;
-                                return;
-                              }
-                              updateCompanionConnection(connection.id, { label });
-                            }}
-                          />
-                        </label>
-                        <label className="ps-field">
-                          <span>聊天名</span>
-                          <input
-                            key={`${connection.id}:conversation:${conversationLabel}`}
-                            className="ps-input"
-                            defaultValue={conversationLabel}
-                            onBlur={(event) => {
-                              const label = event.target.value.trim();
-                              if (!label) {
-                                event.target.value = conversationLabel;
-                                return;
-                              }
-                              updateCompanionConnection(connection.id, { conversationLabel: label });
-                              useChatStore.getState().renameConversation(connection.conversationId, label);
-                            }}
-                          />
-                        </label>
-                        <label className="ps-field">
-                          <span>聊天对象名</span>
-                          <input
-                            key={`${connection.id}:collaborator:${collaboratorLabel}`}
-                            className="ps-input"
-                            defaultValue={collaboratorLabel}
-                            onBlur={(event) => {
-                              const label = event.target.value.trim();
-                              if (!label) {
-                                event.target.value = collaboratorLabel;
-                                return;
-                              }
-                              updateCompanionConnection(connection.id, { collaboratorLabel: label });
-                            }}
-                          />
-                        </label>
-                        <small>点到输入框外就会保存；三个名字互不影响。</small>
                       </div>
                       <div className="companion-provider-actions">
                         <button

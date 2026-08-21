@@ -2,9 +2,33 @@ import { describe, expect, it } from 'vitest';
 import { createMessage } from './chatMessageFactory';
 import {
   areCompanionMessageListsEqual,
+  createCompanionPersonaProjection,
   reconcileCompanionConversationMessages,
   shouldAcceptCompanionSnapshot
 } from './companion';
+import type { PolarisCompanionConnection } from '../types/domain';
+
+function createConnection(patch: Partial<PolarisCompanionConnection> = {}): PolarisCompanionConnection {
+  return {
+    id: 'companion-1',
+    source: 'codex',
+    collaboratorId: 'companion:one',
+    conversationId: 'conversation-1',
+    relayUrl: 'https://vps.example.com',
+    hostId: 'ccc-claude-code-vps',
+    clientId: 'client-1',
+    clientSecret: 'secret-1',
+    label: 'Claude Code · VPS',
+    hostLabel: 'Claude Code · VPS',
+    pushToken: null,
+    pushPlatform: null,
+    remoteThreadId: null,
+    createdAt: 1000,
+    lastSnapshotAt: null,
+    lastError: null,
+    ...patch
+  };
+}
 
 describe('reconcileCompanionConversationMessages', () => {
   it('keeps a local pending user tail until the remote snapshot catches up', () => {
@@ -156,5 +180,39 @@ describe('areCompanionMessageListsEqual', () => {
     right[0].timestamp = 1;
 
     expect(areCompanionMessageListsEqual(left, right)).toBe(false);
+  });
+});
+
+describe('createCompanionPersonaProjection', () => {
+  it('falls back to the generated description/purpose when no override is set', () => {
+    const persona = createCompanionPersonaProjection(createConnection(), null);
+
+    expect(persona.userName).toBe('');
+    expect(persona.description).toContain('远程协作端');
+    expect(persona.purpose).toContain('这不是本地 persona');
+  });
+
+  it('uses the identity-tab overrides once the user sets them, instead of the generated text', () => {
+    const persona = createCompanionPersonaProjection(
+      createConnection({
+        userNameOverride: 'lyko',
+        purposeOverride: '负责陪聊和记事',
+        descriptionOverride: '我的常驻搭子'
+      }),
+      null
+    );
+
+    expect(persona.userName).toBe('lyko');
+    expect(persona.purpose).toBe('负责陪聊和记事');
+    expect(persona.description).toBe('我的常驻搭子');
+  });
+
+  it('uses the connection label as the room name', () => {
+    const persona = createCompanionPersonaProjection(
+      createConnection({ label: 'Las ruinas circulares' }),
+      null
+    );
+
+    expect(persona.name).toBe('Las ruinas circulares');
   });
 });

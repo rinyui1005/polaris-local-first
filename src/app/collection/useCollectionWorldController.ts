@@ -30,7 +30,7 @@ import { usePersonaStore } from '../../stores/personaStore';
 import { selectRuntimeApi, selectVisibleProviders, useRuntimeStore } from '../../stores/runtimeStore';
 import { useSpaceFrontstageBindings } from '../../stores/spaceStoreFrontstageBindings';
 import { useSpaceStore } from '../../stores/spaceStore';
-import type { ChatMessage, McpServerConfig, PolarisTriggerRule, PolarisTriggerSchedule } from '../../types/domain';
+import type { ChatMessage, McpServerConfig, PolarisCompanionConnection, PolarisTriggerRule, PolarisTriggerSchedule } from '../../types/domain';
 import { hasArchivedConversationContent } from './conversationArchiveVisibility';
 import { enterCollaboratorCollectionScope } from '../shell/frontstageNavigation';
 
@@ -66,6 +66,7 @@ export function useCollectionWorldController(ui: CollectionWorldUiPorts) {
   const toggleCollaboratorPinned = usePersonaStore((state) => state.toggleCollaboratorPinned);
   const companionConnections = useRuntimeStore((state) => state.companionConnections);
   const companionSnapshots = useRuntimeStore((state) => state.companionSnapshots);
+  const updateCompanionConnection = useRuntimeStore((state) => state.updateCompanionConnection);
   const companionHost = useRuntimeStore((state) => state.companionHost);
   const triggerRules = useRuntimeStore((state) => state.triggerRules);
   const createTriggerRule = useRuntimeStore((state) => state.createTriggerRule);
@@ -434,6 +435,19 @@ export function useCollectionWorldController(ui: CollectionWorldUiPorts) {
     onUpdateCurrentCollaborator: (patch: Parameters<typeof updateCollaborator>[1]) => {
       const targetPersonaId = collaboratorScopeId;
       if (!targetPersonaId) return;
+      if (isCompanionCollaboratorId(targetPersonaId)) {
+        const connection = companionConnections.find((entry) => entry.collaboratorId === targetPersonaId);
+        if (!connection) return;
+        const connectionPatch: Partial<PolarisCompanionConnection> = {};
+        if (patch.name !== undefined) connectionPatch.label = patch.name;
+        if (patch.description !== undefined) connectionPatch.descriptionOverride = patch.description;
+        if (patch.userName !== undefined) connectionPatch.userNameOverride = patch.userName;
+        if (patch.purpose !== undefined) connectionPatch.purposeOverride = patch.purpose;
+        if (Object.keys(connectionPatch).length > 0) {
+          updateCompanionConnection(connection.id, connectionPatch);
+        }
+        return;
+      }
       if (!hasPersistedCollaborator(targetPersonaId)) return;
       updateCollaborator(targetPersonaId, patch);
     },

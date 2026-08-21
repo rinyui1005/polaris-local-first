@@ -26,17 +26,19 @@ export function createCompanionPersonaProjection(
     ? (connection.hostLabel.includes('Claude Code') ? 'Claude Code' : 'Codex')
     : 'Polaris';
   const displayName = connection.label.trim() || connection.hostLabel.trim() || '电脑端';
-  const description = remoteCollaboratorName
+  const defaultDescription = remoteCollaboratorName
     ? `远程协作端 · 当前由 ${remoteCollaboratorName} 挂在电脑上的 ${sourceLabel} 会话继续活着。`
     : `远程协作端 · 这是电脑上正在活着的 ${sourceLabel} 会话。`;
+  const defaultPurpose = remoteCollaboratorName
+    ? `这不是本地 persona，而是电脑端的 ${sourceLabel} 活体会话。当前主说话人是 ${remoteCollaboratorName}。`
+    : `这不是本地 persona，而是电脑端的 ${sourceLabel} 活体会话。`;
 
   return createPersonaTemplate({
     id: connection.collaboratorId,
     name: displayName,
-    description,
-    purpose: remoteCollaboratorName
-      ? `这不是本地 persona，而是电脑端的 ${sourceLabel} 活体会话。当前主说话人是 ${remoteCollaboratorName}。`
-      : `这不是本地 persona，而是电脑端的 ${sourceLabel} 活体会话。`,
+    description: connection.descriptionOverride?.trim() || defaultDescription,
+    purpose: connection.purposeOverride?.trim() || defaultPurpose,
+    userName: connection.userNameOverride?.trim() || '',
     builderManaged: false,
     compiledPrompt: '',
     baseId: 'executor',
