@@ -223,7 +223,11 @@ async function buildSnapshot(token: string) {
     throw new Error('CcCompanion 鉴权失败或暂时不可用。');
   }
   const status = isObject(statusResult.payload) ? statusResult.payload : {};
-  const active = status.typing === true || status.busy === true || status.running === true;
+  const active = status.status === 'typing'
+    || status.is_typing === true
+    || status.typing === true
+    || status.busy === true
+    || status.running === true;
   const fallbackMessages = mapCccHistory(historyResult.payload);
   const transcriptMessages = transcript
     ? parseClaudeTranscriptJsonl(transcript.text, { active })
