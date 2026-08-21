@@ -76,6 +76,10 @@ export function AppShellOverlays({
             theme={menu.theme}
             onClose={menu.onClose}
             onOpenApi={menu.onOpenApi}
+            onOpenCompanionSetup={() => {
+              menu.onClose();
+              companionSetup.onOpen();
+            }}
           />
         </Suspense>
       )}

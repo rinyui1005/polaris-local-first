@@ -28,6 +28,7 @@ type MenuRootPageProps = {
   onOpenDocs: () => void;
   onOpenApi: () => void;
   onOpenGateway: () => void;
+  onOpenCompanionSetup: () => void;
   onOpenBackup: () => void;
   onOpenPrivacy: () => void;
   onClose: () => void;
@@ -57,6 +58,7 @@ export function MenuRootPage({
   onOpenDocs,
   onOpenApi,
   onOpenGateway,
+  onOpenCompanionSetup,
   onOpenBackup,
   onOpenPrivacy,
   onClose,
@@ -127,6 +129,13 @@ export function MenuRootPage({
           detail={t('settings.gateway.detail')}
           helpText={t('settings.gateway.help')}
           onClick={onOpenGateway}
+        />
+        <MenuSheetItem
+          icon="zap"
+          title={t('settings.companion.title')}
+          detail={t('settings.companion.detail')}
+          helpText={t('settings.companion.help')}
+          onClick={onOpenCompanionSetup}
         />
         {androidApkUpdateAvailable ? (
           <MenuSheetItem

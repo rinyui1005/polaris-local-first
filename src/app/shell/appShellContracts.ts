@@ -48,6 +48,7 @@ export type CollaboratorBuilderOverlayProps = {
 export type CompanionSetupOverlayProps = {
   open: boolean;
   onClose: () => void;
+  onOpen: () => void;
 };
 
 export type AppShellOverlaysProps = {

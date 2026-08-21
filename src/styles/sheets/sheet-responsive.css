@@ -6,14 +6,6 @@
   .companion-connected-item {
     flex-direction: column;
   }
-  .companion-connected-names {
-    grid-template-columns: 1fr;
-    width: 100%;
-    flex-basis: auto;
-  }
-  .companion-connected-names > small {
-    grid-column: auto;
-  }
   .companion-bridge-command-row {
     grid-template-columns: 1fr auto;
   }

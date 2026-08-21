@@ -151,7 +151,8 @@ export function useAppShellOverlayController({
     },
     companionSetupBridge: {
       open: modals.companionSetupOpen,
-      onClose: () => modals.setCompanionSetupOpen(false)
+      onClose: () => modals.setCompanionSetupOpen(false),
+      onOpen: () => modals.setCompanionSetupOpen(true)
     }
   });
 

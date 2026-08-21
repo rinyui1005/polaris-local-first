@@ -90,7 +90,8 @@ export function buildAppShellOverlaysProps({
     },
     companionSetup: {
       open: companionSetupOpen,
-      onClose: companionSetupBridge.onClose
+      onClose: companionSetupBridge.onClose,
+      onOpen: companionSetupBridge.onOpen
     }
   };
 }

@@ -28,6 +28,7 @@ type MenuSheetProps = {
   theme: ThemeState;
   onClose: () => void;
   onOpenApi: (returnPage: MenuPage) => void;
+  onOpenCompanionSetup: () => void;
 };
 
 export function MenuSheet({
@@ -35,7 +36,8 @@ export function MenuSheet({
   initialPage = 'root',
   theme,
   onClose,
-  onOpenApi
+  onOpenApi,
+  onOpenCompanionSetup
 }: MenuSheetProps) {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const fontInputRef = useRef<HTMLInputElement | null>(null);
@@ -124,6 +126,7 @@ export function MenuSheet({
             onOpenDocs={() => controller.onSetPage('docs')}
             onOpenApi={controller.onOpenApiFromRoot}
             onOpenGateway={() => controller.onSetPage('gateway')}
+            onOpenCompanionSetup={onOpenCompanionSetup}
             onOpenBackup={() => controller.onSetPage('backup')}
             onOpenPrivacy={() => controller.onSetPage('privacy')}
             onClose={onClose}
