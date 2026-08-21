@@ -22,6 +22,7 @@ export function CompanionSetupSheet({ open, onClose }: CompanionSetupSheetProps)
   const [commandStatus, setCommandStatus] = useState<{ text: string; isError: boolean } | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [disconnectingConnectionId, setDisconnectingConnectionId] = useState<string | null>(null);
+  const [resettingConnectionId, setResettingConnectionId] = useState<string | null>(null);
 
   const sortedConnections = useMemo(
     () => [...companionConnections].sort((left, right) => right.createdAt - left.createdAt),
@@ -158,6 +159,39 @@ export function CompanionSetupSheet({ open, onClose }: CompanionSetupSheetProps)
                           }}
                         >
                           {disconnectingConnectionId === connection.id ? '断开中…' : '断开'}
+                        </button>
+                        <button
+                          type="button"
+                          className="ps-secondary"
+                          disabled={resettingConnectionId === connection.id}
+                          onClick={() => {
+                            if (resettingConnectionId === connection.id) return;
+                            if (typeof window !== 'undefined' && !window.confirm('清空这台设备上这个房间的本地聊天记录？电脑端 Claude Code 的会话不受影响，下次同步会从电脑那边重新拉一份干净的记录。')) {
+                              return;
+                            }
+                            setResettingConnectionId(connection.id);
+                            setCommandStatus(null);
+                            void useChatStore.getState().ensureConversationWritable(connection.conversationId)
+                              .then((writable) => {
+                                if (!writable) {
+                                  setCommandStatus({ text: '这个房间还没准备好，先别重置。', isError: true });
+                                  return;
+                                }
+                                useChatStore.getState().replaceConversationMessages(writable, []);
+                                setCommandStatus({ text: '本地记录已清空，等一两次同步就会从电脑端重新拉取。', isError: false });
+                              })
+                              .catch((error) => {
+                                setCommandStatus({
+                                  text: error instanceof Error ? error.message : '重置本地记录失败。',
+                                  isError: true
+                                });
+                              })
+                              .finally(() => {
+                                setResettingConnectionId(null);
+                              });
+                          }}
+                        >
+                          {resettingConnectionId === connection.id ? '重置中…' : '重置本地记录'}
                         </button>
                       </div>
                     </article>
