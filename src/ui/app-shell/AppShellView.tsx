@@ -28,6 +28,7 @@ export function AppShellView({
   collectionCreateCustomCollaborator,
   collectionOpenProviderSettings,
   collectionOpenSettings,
+  openCompanionSetup,
   collectionOpenDesktopLocalSettings,
   collectionDeleteCollaborator,
   collaboratorTransitionKey,
@@ -79,6 +80,7 @@ export function AppShellView({
                 onCollaboratorSwitchOpenChange={setCollectionCollaboratorSwitchOpen}
                 onDeleteCollaborator={collectionDeleteCollaborator}
                 onOpenSettings={collectionOpenSettings}
+                onOpenCompanionSettings={openCompanionSetup}
                 infoFullscreenOpen={collectionInfoFullscreenOpen}
                 onInfoFullscreenOpenChange={setCollectionInfoFullscreenOpen}
                 onDetailOpenChange={setCollectionDetailOpen}

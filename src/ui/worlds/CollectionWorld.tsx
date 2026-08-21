@@ -10,12 +10,14 @@ import { CollaboratorInfoShelf } from '../collection/info/CollaboratorInfoShelf'
 import { ImageCollectionShelf } from '../collection/images/ImageCollectionShelf';
 import { CodeProjectCollectionShelfPages } from './collection/CodeProjectCollectionShelfPages';
 import { useI18n } from '../../i18n';
+import { isCompanionCollaboratorId } from '../../engines/companion';
 
 type CollectionWorldProps = {
   searchOpen: boolean;
   collaboratorSwitchOpen: boolean;
   onCollaboratorSwitchOpenChange: (open: boolean) => void;
   onOpenSettings: () => void;
+  onOpenCompanionSettings: () => void;
   onDeleteCollaborator: (collaboratorId: string) => void;
   infoFullscreenOpen: boolean;
   onInfoFullscreenOpenChange: (open: boolean) => void;
@@ -31,6 +33,7 @@ export function CollectionWorld({
   collaboratorSwitchOpen,
   onCollaboratorSwitchOpenChange,
   onOpenSettings,
+  onOpenCompanionSettings,
   onDeleteCollaborator,
   infoFullscreenOpen,
   onInfoFullscreenOpenChange,
@@ -109,7 +112,13 @@ export function CollectionWorld({
         onClose={() => onCollaboratorSwitchOpenChange(false)}
         onCreateFromBuilder={onOpenCollaboratorBuilderForCreate}
         onCreateCustomCollaborator={onCreateCustomCollaborator}
-        onOpenSettings={onOpenSettings}
+        onOpenSettings={() => {
+          if (controller.collaboratorScopeId && isCompanionCollaboratorId(controller.collaboratorScopeId)) {
+            onOpenCompanionSettings();
+            return;
+          }
+          onOpenSettings();
+        }}
       />
 
       <div className={`surface-motion-local-stage collection-shelf-stage ${searchOpen ? 'collection-shelf-stage--controls-open' : ''}`}>
