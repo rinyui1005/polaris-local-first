@@ -339,7 +339,7 @@ export function useCompanionRuntime({ enabled = true }: UseCompanionRuntimeOptio
         const chatState = useChatStore.getState();
         const existingConversation = chatState.conversations.find((conversation) => conversation.id === connection.conversationId) ?? null;
         const acceptSnapshot = response.snapshot
-          ? shouldAcceptCompanionSnapshot(existingConversation, response.snapshot)
+          ? shouldAcceptCompanionSnapshot(connection.lastSnapshotAt, response.snapshot)
           : true;
         const runtimeState = useRuntimeStore.getState();
         if (

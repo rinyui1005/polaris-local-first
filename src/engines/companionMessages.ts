@@ -1,4 +1,4 @@
-import type { ChatMessage, Conversation, PolarisCompanionSnapshot } from '../types/domain.js';
+import type { ChatMessage, PolarisCompanionSnapshot } from '../types/domain.js';
 
 export function stripCompanionMessage(message: PolarisCompanionSnapshot['messages'][number]) {
   return {
@@ -148,9 +148,20 @@ export function reconcileCompanionConversationMessages(
   return [...nextRemoteMessages, ...unacknowledgedLocalTail];
 }
 
+/**
+ * Gate against a stale/out-of-order network response undoing progress we've
+ * already made from the remote host. Deliberately compared against the last
+ * remote snapshot we actually accepted (connection.lastSnapshotAt) rather
+ * than the local conversation's own updatedAt: that field jumps to "now"
+ * the instant the user sends anything, including a purely local optimistic
+ * message the remote host hasn't reflected yet — comparing against it would
+ * reject every snapshot until the remote host happened to catch up on its
+ * own, freezing the chat with no visible sync in the meantime.
+ */
 export function shouldAcceptCompanionSnapshot(
-  localConversation: Pick<Conversation, 'updatedAt'> | null | undefined,
+  lastAcceptedSnapshotAt: number | null | undefined,
   snapshot: Pick<PolarisCompanionSnapshot, 'updatedAt'>
 ) {
-  return !localConversation || snapshot.updatedAt >= localConversation.updatedAt;
+  return lastAcceptedSnapshotAt === null || lastAcceptedSnapshotAt === undefined
+    || snapshot.updatedAt >= lastAcceptedSnapshotAt;
 }

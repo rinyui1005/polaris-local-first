@@ -149,17 +149,28 @@ describe('reconcileCompanionConversationMessages', () => {
 });
 
 describe('shouldAcceptCompanionSnapshot', () => {
-  it('rejects older remote snapshots for an existing local conversation', () => {
-    expect(shouldAcceptCompanionSnapshot({ updatedAt: 200 }, { updatedAt: 199 })).toBe(false);
+  it('rejects a remote snapshot older than the last one we already accepted', () => {
+    expect(shouldAcceptCompanionSnapshot(200, { updatedAt: 199 })).toBe(false);
   });
 
   it('accepts equal or newer remote snapshots', () => {
-    expect(shouldAcceptCompanionSnapshot({ updatedAt: 200 }, { updatedAt: 200 })).toBe(true);
-    expect(shouldAcceptCompanionSnapshot({ updatedAt: 200 }, { updatedAt: 201 })).toBe(true);
+    expect(shouldAcceptCompanionSnapshot(200, { updatedAt: 200 })).toBe(true);
+    expect(shouldAcceptCompanionSnapshot(200, { updatedAt: 201 })).toBe(true);
   });
 
-  it('accepts remote snapshots when there is no local conversation yet', () => {
+  it('accepts the first snapshot ever seen for a connection', () => {
     expect(shouldAcceptCompanionSnapshot(null, { updatedAt: 1 })).toBe(true);
+  });
+
+  it('is not blocked by a purely local optimistic send bumping conversation.updatedAt', () => {
+    // A local send jumps conversation.updatedAt to "now" long before the
+    // remote host has processed anything. The gate must only compare
+    // against the last remote snapshot we actually accepted, not against
+    // that local timestamp, or every snapshot would be rejected until the
+    // remote host happened to catch up on its own.
+    const lastAcceptedRemoteSnapshotAt = 1_000;
+
+    expect(shouldAcceptCompanionSnapshot(lastAcceptedRemoteSnapshotAt, { updatedAt: 1_200 })).toBe(true);
   });
 });
 
