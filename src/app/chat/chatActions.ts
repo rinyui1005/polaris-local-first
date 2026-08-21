@@ -89,22 +89,28 @@ export function createChatActionHandlers({
               (connection) => connection.collaboratorId === latestActiveConversation.collaboratorId
             ) ?? null
           : null;
-      if (activeCompanionConnection) {
-        await submitCompanionMessage({
-          inputDraft: latestSubmitState.inputDraft,
-          pendingAttachments: latestSubmitState.pendingAttachments,
-          pendingCardReference: latestSubmitState.pendingCardReference,
-          activeConversation: latestActiveConversation
-        }, {
-          ensureConversationWritable: store.chat.ensureConversationWritable,
-          addMessage: store.chat.addMessage,
-          setInputDraft: store.chat.setInputDraft,
-          clearPendingAttachments: store.space.clearPendingAttachments,
-          clearPendingCardReference: store.space.clearPendingCardReference,
-          setCommandStatus: ui.setCommandStatus,
-          persistToDb: store.chat.persistToDb,
-          onUserMessageSubmitted: ui.triggerSubmitFlight
-        }, activeCompanionConnection);
+      if (activeCompanionConnection && latestActiveConversation) {
+        const generationControls = ui.getConversationGenerationControls(latestActiveConversation.id);
+        generationControls.setSending(true);
+        try {
+          await submitCompanionMessage({
+            inputDraft: latestSubmitState.inputDraft,
+            pendingAttachments: latestSubmitState.pendingAttachments,
+            pendingCardReference: latestSubmitState.pendingCardReference,
+            activeConversation: latestActiveConversation
+          }, {
+            ensureConversationWritable: store.chat.ensureConversationWritable,
+            addMessage: store.chat.addMessage,
+            setInputDraft: store.chat.setInputDraft,
+            clearPendingAttachments: store.space.clearPendingAttachments,
+            clearPendingCardReference: store.space.clearPendingCardReference,
+            setCommandStatus: ui.setCommandStatus,
+            persistToDb: store.chat.persistToDb,
+            onUserMessageSubmitted: ui.triggerSubmitFlight
+          }, activeCompanionConnection);
+        } finally {
+          generationControls.setSending(false);
+        }
         return;
       }
       await submitMessage({

@@ -247,7 +247,8 @@ async function buildSnapshot(token: string) {
     collaboratorId: null,
     collaboratorName: 'Claude Code',
     messages,
-    updatedAt
+    updatedAt,
+    generating: active
   };
 }
 

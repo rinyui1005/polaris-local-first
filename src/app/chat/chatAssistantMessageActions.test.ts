@@ -23,6 +23,12 @@ function createHandlersForConversation(params: {
     setCommandStatus: vi.fn(),
     triggerSubmitFlight: vi.fn(),
     cancelEditingMessage: vi.fn(),
+    getConversationGenerationControls: vi.fn(() => ({
+      abortControllerRef: { current: null },
+      setSending: vi.fn(),
+      setStreaming: vi.fn(),
+      streamingLifecycleReleaseRef: { current: null }
+    })),
     ...params.ui
   };
   const chat: ChatActionStoreBindings['chat'] = {

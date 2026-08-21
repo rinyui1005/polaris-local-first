@@ -83,6 +83,7 @@ export type ChatUiActionState = {
   setCommandStatus: (text: string, isError?: boolean) => void;
   triggerSubmitFlight: () => void;
   cancelEditingMessage: () => void;
+  getConversationGenerationControls: (conversationId: string) => ChatUiGenerationControls;
 };
 
 export type ChatUiToolState = {

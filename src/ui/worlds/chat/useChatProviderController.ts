@@ -44,6 +44,14 @@ export function useChatProviderController({
   const activeGeneration = store.chat.activeConversationId
     ? ui.generationByConversationId[store.chat.activeConversationId] ?? null
     : null;
+  const activeCompanionConnection = store.chat.activeConversationId
+    ? store.runtime.companionConnections.find(
+        (connection) => connection.conversationId === store.chat.activeConversationId
+      ) ?? null
+    : null;
+  const companionGenerating = activeCompanionConnection
+    ? store.runtime.companionSnapshots[activeCompanionConnection.id]?.generating === true
+    : false;
   const directConversations = useMemo(
     () => store.chat.conversations.filter((conversation) => !isGroupConversation(conversation)),
     [store.chat.conversations]
@@ -64,7 +72,7 @@ export function useChatProviderController({
     api: store.runtime.api,
     providers: store.runtime.providers,
     streaming: activeGeneration?.streaming ?? null,
-    sending: activeGeneration?.sending ?? false,
+    sending: (activeGeneration?.sending ?? false) || companionGenerating,
     collectionCards: store.collection.cards,
     focusedMessageTarget: store.space.focusedMessageTarget
   });

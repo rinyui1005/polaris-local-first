@@ -87,7 +87,13 @@ describe('createChatActionHandlers', () => {
         confirm: vi.fn(() => true),
         setCommandStatus: vi.fn(),
         triggerSubmitFlight: vi.fn(),
-        cancelEditingMessage: vi.fn()
+        cancelEditingMessage: vi.fn(),
+        getConversationGenerationControls: vi.fn(() => ({
+          abortControllerRef: { current: null },
+          setSending: vi.fn(),
+          setStreaming: vi.fn(),
+          streamingLifecycleReleaseRef: { current: null }
+        }))
       },
       store: {
         chat: {
@@ -189,7 +195,13 @@ describe('createChatActionHandlers', () => {
         confirm: vi.fn(() => true),
         setCommandStatus: vi.fn(),
         triggerSubmitFlight: vi.fn(),
-        cancelEditingMessage: vi.fn()
+        cancelEditingMessage: vi.fn(),
+        getConversationGenerationControls: vi.fn(() => ({
+          abortControllerRef: { current: null },
+          setSending: vi.fn(),
+          setStreaming: vi.fn(),
+          streamingLifecycleReleaseRef: { current: null }
+        }))
       },
       store: {
         chat: {
@@ -313,7 +325,13 @@ describe('createChatActionHandlers', () => {
         confirm: vi.fn(() => true),
         setCommandStatus: vi.fn(),
         triggerSubmitFlight: vi.fn(),
-        cancelEditingMessage: vi.fn()
+        cancelEditingMessage: vi.fn(),
+        getConversationGenerationControls: vi.fn(() => ({
+          abortControllerRef: { current: null },
+          setSending: vi.fn(),
+          setStreaming: vi.fn(),
+          streamingLifecycleReleaseRef: { current: null }
+        }))
       },
       store: {
         chat: {
@@ -407,7 +425,13 @@ describe('createChatActionHandlers', () => {
         confirm: vi.fn(() => true),
         setCommandStatus: vi.fn(),
         triggerSubmitFlight: vi.fn(),
-        cancelEditingMessage: vi.fn()
+        cancelEditingMessage: vi.fn(),
+        getConversationGenerationControls: vi.fn(() => ({
+          abortControllerRef: { current: null },
+          setSending: vi.fn(),
+          setStreaming: vi.fn(),
+          streamingLifecycleReleaseRef: { current: null }
+        }))
       },
       store: {
         chat: {
@@ -507,7 +531,13 @@ describe('createChatActionHandlers', () => {
         confirm: vi.fn(() => true),
         setCommandStatus: vi.fn(),
         triggerSubmitFlight: vi.fn(),
-        cancelEditingMessage: vi.fn()
+        cancelEditingMessage: vi.fn(),
+        getConversationGenerationControls: vi.fn(() => ({
+          abortControllerRef: { current: null },
+          setSending: vi.fn(),
+          setStreaming: vi.fn(),
+          streamingLifecycleReleaseRef: { current: null }
+        }))
       },
       store: {
         chat: {

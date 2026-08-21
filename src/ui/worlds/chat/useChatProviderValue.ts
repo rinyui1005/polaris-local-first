@@ -413,7 +413,8 @@ export function useChatProviderValue({
       confirm: (message) => window.confirm(message),
       setCommandStatus: ui.setCommandStatus,
       triggerSubmitFlight: ui.triggerSubmitFlight,
-      cancelEditingMessage: ui.cancelEditingMessage
+      cancelEditingMessage: ui.cancelEditingMessage,
+      getConversationGenerationControls: ui.getConversationGenerationControls
     },
     store: actionStore,
     derived,

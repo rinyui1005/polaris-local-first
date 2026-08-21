@@ -117,5 +117,7 @@ export interface PolarisCompanionSnapshot {
   collaboratorName: string | null;
   messages: ChatMessage[];
   updatedAt: number;
+  /** True while the remote host is still generating a reply (e.g. Claude Code is typing). */
+  generating?: boolean;
 }
 
