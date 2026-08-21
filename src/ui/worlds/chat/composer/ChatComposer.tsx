@@ -2,6 +2,7 @@ import { ImpactStyle } from '@capacitor/haptics';
 import type { ClipboardEvent, KeyboardEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveChatCardReference } from '../../../../app/collection/codeCollectionSource';
+import { isCompanionCollaboratorId } from '../../../../engines/companion';
 import { Icon } from '../../../Icon';
 import { runImpactAction } from '../../../haptics';
 import {
@@ -136,6 +137,13 @@ export function ChatComposer() {
   }, [localDraft]);
 
   const interactionLocked = presentation.interactionLocked;
+  // Companion "sending" is a passive indicator (is the remote host still
+  // working), not a request Polaris itself is holding open — there is
+  // nothing here to abort, and CcCompanion already handles receiving
+  // another message while a reply is still in flight. Treating it like the
+  // direct-provider streaming lock would strand the composer on "stop
+  // generation" if the live status lags behind the reply actually finishing.
+  const isCompanionConversation = isCompanionCollaboratorId(presentation.activeCollaboratorId);
   const hasUnsupportedPendingImages = presentation.hasUnsupportedPendingImages;
   const visibleStatus = ui.commandStatus;
   const slashCommandQuery = useMemo(() => {
@@ -180,7 +188,7 @@ export function ChatComposer() {
     void actions.submit();
   };
   const handleSubmitPress = () => {
-    if (ui.sending) {
+    if (ui.sending && !isCompanionConversation) {
       actions.stopGeneration();
       return;
     }
@@ -310,15 +318,19 @@ export function ChatComposer() {
                     : ''
                 }`}
                 disabled={hasUnsupportedPendingImages || interactionLocked}
-                aria-label={ui.sending ? t('chat.composer.stopGeneration') : hasSlashCommandDraft ? t('chat.composer.executeCommand') : t('chat.composer.sendMessage')}
+                aria-label={
+                  ui.sending && !isCompanionConversation
+                    ? t('chat.composer.stopGeneration')
+                    : hasSlashCommandDraft ? t('chat.composer.executeCommand') : t('chat.composer.sendMessage')
+                }
                 onClick={(event) => {
                   runImpactAction(handleSubmitPress, {
                     element: event.currentTarget,
-                    style: ui.sending ? ImpactStyle.Medium : ImpactStyle.Light
+                    style: ui.sending && !isCompanionConversation ? ImpactStyle.Medium : ImpactStyle.Light
                   });
                 }}
               >
-                <Icon name={ui.sending ? 'x' : hasSlashCommandDraft ? 'check' : 'send'} size={16} />
+                <Icon name={ui.sending && !isCompanionConversation ? 'x' : hasSlashCommandDraft ? 'check' : 'send'} size={16} />
               </button>
             </div>
           </div>
