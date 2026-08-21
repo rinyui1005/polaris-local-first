@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { isCompanionCollaboratorId } from '../../engines/companion';
 import { extractCodeBlocksFromMessage } from '../../engines/codeCardEngine';
 import { resolveConversationCollaboratorName } from '../../engines/conversationOwnership';
 import {
@@ -153,7 +154,8 @@ export function useChatDerived({
     providers,
     persona: currentCollaborator
   }).api;
-  const apiImagesEnabled = providerRuntimeSupportsImageInput(effectiveApi, currentCollaborator?.advanced);
+  const apiImagesEnabled = isCompanionCollaboratorId(currentCollaborator?.id)
+    || providerRuntimeSupportsImageInput(effectiveApi, currentCollaborator?.advanced);
   const effectiveImageUnderstanding = resolveProviderImageUnderstandingSettings({
     api: effectiveApi
   });
