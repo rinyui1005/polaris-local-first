@@ -22,6 +22,7 @@ import { MessageGeneratedImages } from './MessageGeneratedImages';
 import { MessageToolEvent } from './MessageToolEvent';
 import { isProjectedCodeToolName } from './projectedCodeTools';
 import { buildAssistantSpeechText } from './messageSpeechText';
+import { formatMessageTimestamp } from './messageTimestamp';
 import {
   buildVisibleToolProductCardMessageIds,
   nextToolProductCardActivationBlockedUntil,
@@ -168,6 +169,7 @@ function MessageRowComponent({
     () => (isAssistantReply ? buildAssistantSpeechText(message.content) : ''),
     [isAssistantReply, message.content]
   );
+  const timestampLabel = formatMessageTimestamp(message.timestamp);
   const currentInteractionTimeMs = () => (
     typeof performance !== 'undefined' && typeof performance.now === 'function'
       ? performance.now()
@@ -462,6 +464,11 @@ function MessageRowComponent({
                 />
               ) : null}
               {messageBubble}
+              {timestampLabel ? (
+                <time className="message-timestamp assistant" dateTime={new Date(message.timestamp).toISOString()}>
+                  {timestampLabel}
+                </time>
+              ) : null}
               {toolMessages.length > 0 ? (
                 <div className="assistant-leading-tool-list">
                   {toolMessages.map((toolMessage) => (
@@ -489,6 +496,11 @@ function MessageRowComponent({
           <div className="message-turn-body user">
             <div className="message-turn-stack user">
               {messageBubble}
+              {timestampLabel ? (
+                <time className="message-timestamp user" dateTime={new Date(message.timestamp).toISOString()}>
+                  {timestampLabel}
+                </time>
+              ) : null}
               {messageActions}
             </div>
             {showChatAvatars ? (
